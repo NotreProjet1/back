@@ -5,19 +5,22 @@ const saltRounds = 10; // Nombre de rounds de salage pour bcrypt
 
 const Participant = {
   register: (participantData, callback) => {
-    // Hash du mot de passe avant de l'insérer dans la base de données
-    bcrypt.hash(participantData.password, saltRounds, (err, hashedPassword) => {
+    const trimmedPassword = participantData.password.trim(); // Trim whitespace
+
+    bcrypt.hash(trimmedPassword, saltRounds, (err, hashedPassword) => {
       if (err) {
         return callback(err);
       }
 
       db.query(
-        'INSERT INTO user (nom, prenom, email, password) VALUES (?, ?, ?, ?)',
+        'INSERT INTO user (nom, prenom, email, password, categorie, domaine) VALUES (?, ?, ?, ?, ?, ?)',
         [
           participantData.nom,
           participantData.prenom,
           participantData.email,
-          hashedPassword, // Utilisez le mot de passe haché
+          hashedPassword,
+          participantData.categorie,
+          participantData.domaine,
         ],
         (error, result) => {
           if (error) {
@@ -30,27 +33,40 @@ const Participant = {
   },
 
   login: (email, password, callback) => {
+    const trimmedPassword = password.trim(); // Trim whitespace
+  
     db.query('SELECT * FROM user WHERE email = ?', [email], (error, results) => {
       if (error) {
         return callback(error);
       }
       if (results.length > 0) {
-        // Utilisez bcrypt.compare pour comparer les mots de passe
-        bcrypt.compare(password, results[0].password, (err, passwordMatch) => {
+        const storedHashedPassword = results[0].password;
+  
+        console.log('Provided Password:', trimmedPassword);
+        console.log('Stored Hashed Password (from DB):', storedHashedPassword);
+  
+        bcrypt.compare(trimmedPassword, storedHashedPassword, (err, passwordMatch) => {
           if (err) {
+            console.error('bcrypt.compare Error:', err);
             return callback(err);
           }
+          console.log('Password Match:', passwordMatch);
+  
           if (passwordMatch) {
+            // Passwords match, return the user
             return callback(null, results[0]);
           } else {
-            return callback(null, null); // Mot de passe incorrect
+            // Incorrect password
+            return callback(null, null);
           }
         });
       } else {
-        return callback(null, null); // Utilisateur non trouvé
+        // User not found
+        return callback(null, null);
       }
     });
   },
+  
 };
 
 module.exports = Participant;
