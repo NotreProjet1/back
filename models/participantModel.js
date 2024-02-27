@@ -10,8 +10,8 @@ const Participant = {
     bcrypt.hash(trimmedPassword, saltRounds, (err, hashedPassword) => {
       if (err) {
         return callback(err);
-      }
-
+      }  
+  
       db.query(
         'INSERT INTO user (nom, prenom, email, password, categorie, domaine) VALUES (?, ?, ?, ?, ?, ?)',
         [

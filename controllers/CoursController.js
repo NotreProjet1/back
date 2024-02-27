@@ -1,6 +1,10 @@
 const Course = require('../models/CoursModel');
-
+const jwt = require('jsonwebtoken');
+const secretKey = process.env.SECRET_KEY || 'votreclésecrete';
+const ERROR_MESSAGE = 'L\'authentification a échoué';
+const SUCCESS_MESSAGE = 'L\'authentification a réussi';
 const courseController = {
+   
   getAllCourses: async (req, res) => {
     try {
       const courses = await Course.getAllCourses((error, results) => {
@@ -73,14 +77,21 @@ const courseController = {
   },
   searchCoursesByTitre: async (req, res) => {
     const { titre } = req.query;  // Utilisation de req.query avec "titre"
-
+  
     try {
-      const courses = await Course.searchCoursesByTitre(titre);
-      res.json(courses);
+      Course.searchCoursesByTitre(titre, (error, courses) => {
+        if (error) {
+          console.error('Error in searchCoursesByTitre:', error);
+          res.status(500).json({ error: 'Internal Server Error' });
+        } else {
+          res.json(courses);
+        }
+      });
     } catch (error) {
       res.status(500).json({ error: 'Internal Server Error' });
     }
   },
+  
 };
 
 module.exports = courseController;

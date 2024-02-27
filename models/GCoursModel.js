@@ -1,15 +1,13 @@
 const db = require('../config/db');
 
-const CoursModel = {
-  createCoursTable: (callback) => {
+const GratuisCoursModel = {
+  createGratuisCoursTable: (callback) => {
     db.query(`
-      CREATE TABLE IF NOT EXISTS coursp (
+      CREATE TABLE IF NOT EXISTS gratuitscours (
         id INT AUTO_INCREMENT PRIMARY KEY,
         titre VARCHAR(255) NOT NULL,
         description TEXT NOT NULL,
         contenu TEXT NOT NULL,
-        planning TEXT NOT NULL,
-        prix DECIMAL(10, 2) NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
       )
@@ -21,13 +19,13 @@ const CoursModel = {
     });
   },
 
-  createCourse: (titre, contenu, description, planning, prix, callback) => {
+  createGratuisCours: (titre, contenu, description, callback) => {
     db.query(
-      'INSERT INTO coursp (titre, contenu, description, planning, prix) VALUES (?, ?, ?, ?, ?)',
-      [titre, contenu, description, planning, prix],
+      'INSERT INTO gratuitscours (titre, contenu, description) VALUES (?, ?, ?)',
+      [titre, contenu, description],
       (error, results) => {
         if (error) {
-          console.error('Error in createCourse:', error);
+          console.error('Error in createGratuisCours:', error);
           return callback(error);
         }
         return callback(null, results.insertId);
@@ -35,25 +33,23 @@ const CoursModel = {
     );
   },
 
-  getAllCourses: (callback) => {
-    db.query('SELECT * FROM coursp', (error, results) => {
+  getAllGratuisCours: (callback) => {
+    db.query('SELECT * FROM gratuitscours', (error, results) => {
       if (error) {
-
-
-        console.error('Error in getAllCourses:', error);
+        console.error('Error in getAllGratuisCours:', error);
         return callback(error);
       }
       return callback(null, results);
     });
   },
 
-  updateCourse: (id, titre, contenu, description, planning, prix, callback) => {
+  updateGratuisCours: (id, titre, contenu, description, callback) => {
     db.query(
-      'UPDATE coursp SET titre = ?, contenu = ?, description = ?, planning = ?, prix = ? WHERE id = ?',
-      [titre, contenu, description, planning, prix, id],
+      'UPDATE gratuitscours SET titre = ?, contenu = ?, description = ? WHERE id = ?',
+      [titre, contenu, description, id],
       (error, results) => {
         if (error) {
-          console.error('Error in updateCourse:', error);
+          console.error('Error in updateGratuisCours:', error);
           return callback(error);
         }
         return callback(null, results);
@@ -61,31 +57,28 @@ const CoursModel = {
     );
   },
 
-  deleteCourse: (id, callback) => {
-    db.query('DELETE FROM coursp WHERE id = ?', [id], (error, results) => {
+  deleteGratuisCours: (id, callback) => {
+    db.query('DELETE FROM gratuitscours WHERE id = ?', [id], (error, results) => {
       if (error) {
-        console.error('Error in deleteCourse:', error);
+        console.error('Error in deleteGratuisCours:', error);
         return callback(error);
       }
       return callback(null, results);
     });
   },
-  searchCoursesByTitre: (titre, callback) => {
+  searchGratuisCoursByTitre: (titre, callback) => {
     const searchTerm = '%' + titre + '%'; // Ajout de % au début et à la fin
-    const query = 'SELECT * FROM coursp WHERE titre LIKE ?';
+    const query = 'SELECT * FROM gratuitscours WHERE titre LIKE ?';
 
     db.query(query, [searchTerm], (error, results) => {
       if (error) {
-        console.error('Error in searchCoursesByTitre:', error);
+        console.error('Error in searchGratuisCoursByTitre:', error);
         return callback(error);
       }
 
       return callback(null, results);
     });
   },
-  
-  
-
 };
 
-module.exports = CoursModel;
+module.exports = GratuisCoursModel;
