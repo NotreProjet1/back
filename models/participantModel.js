@@ -1,72 +1,87 @@
-const db = require('../config/db');
 const bcrypt = require('bcrypt');
+const util = require('util');
+const dbConnection = require('../config/db');
 
-const saltRounds = 10; // Nombre de rounds de salage pour bcrypt
+const saltRounds = 10;
+const query = util.promisify(dbConnection.query).bind(dbConnection);
 
-const Participant = {
-  register: (participantData, callback) => {
-    const trimmedPassword = participantData.password.trim(); // Trim whitespace
-
-    bcrypt.hash(trimmedPassword, saltRounds, (err, hashedPassword) => {
-      if (err) {
-        return callback(err);
-      }  
-  
-      db.query(
-        'INSERT INTO user (nom, prenom, email, password, categorie, domaine) VALUES (?, ?, ?, ?, ?, ?)',
-        [
-          participantData.nom,
-          participantData.prenom,
-          participantData.email,
-          hashedPassword,
-          participantData.categorie,
-          participantData.domaine,
-        ],
-        (error, result) => {
-          if (error) {
-            return callback(error);
-          }
-          return callback(null, result);
-        }
-      );
-    });
-  },
-
-  login: (email, password, callback) => {
-    const trimmedPassword = password.trim(); // Trim whitespace
-  
-    db.query('SELECT * FROM user WHERE email = ?', [email], (error, results) => {
-      if (error) {
-        return callback(error);
-      }
+const Instructeur = {
+  register: async (instructeurData) => {
+    try {
+        const hashedpassw = await bcrypt.hash(instructeurData.passw, saltRounds);
+        const result = await query(
+            'INSERT INTO instructeur (nom, prenom, email, passw, tel, specialite) VALUES (?, ?, ?, ?, ?, ?)',
+            [
+                instructeurData.nom,
+                instructeurData.prenom,
+                instructeurData.email,
+                hashedpassw,
+                instructeurData.tel,
+                instructeurData.specialite,
+            ]
+        );
+        return result;
+    } catch (error) {
+        throw error;
+    }
+},
+login: async (email, passw) => {
+  try {
+      const results = await query('SELECT * FROM instructeur WHERE email = ?', [email]);
       if (results.length > 0) {
-        const storedHashedPassword = results[0].password;
-  
-        console.log('Provided Password:', trimmedPassword);
-        console.log('Stored Hashed Password (from DB):', storedHashedPassword);
-  
-        bcrypt.compare(trimmedPassword, storedHashedPassword, (err, passwordMatch) => {
-          if (err) {
-            console.error('bcrypt.compare Error:', err);
-            return callback(err);
-          }
-          console.log('Password Match:', passwordMatch);
-  
-          if (passwordMatch) {
-            // Passwords match, return the user
-            return callback(null, results[0]);
-          } else {
-            // Incorrect password
-            return callback(null, null);
-          }
-        });
+          const passwMatch = await bcrypt.compare(passw, results[0].passw);
+          return passwMatch ? results[0] : null;
       } else {
-        // User not found
-        return callback(null, null);
+          return null; // User not found
       }
-    });
-  },
-  
-};
+  } catch (error) {
+      throw error;
+  }
+},
 
-module.exports = Participant;
+getInstructeurById: async (id) => {
+    try {
+        const results = await query('SELECT * FROM instructeur WHERE id = ?', [id]);
+        return results.length > 0 ? results[0] : null;
+    } catch (error) {
+        throw error;
+    }
+},
+   
+  updateInstructeur: async (id, instructeurData) => {
+      try {
+          const { nom, prenom, email, tel, specialite, passw } = instructeurData;
+
+          // Validation
+          if (!nom || !prenom || !email || !tel || !specialite || !passw) {
+              throw new Error('Tous les champs sont requis pour modifier un instructeur.');
+          }
+
+          const hashedpassw = await bcrypt.hash(passw, saltRounds);
+
+          const updateQuery = `
+              UPDATE instructeur
+              SET nom = ?, prenom = ?, email = ?, tel = ?, specialite = ?, passw = ?
+              WHERE id = ?
+          `;
+
+          const result = await query(updateQuery, [nom, prenom, email, tel, specialite, hashedpassw, id]);
+          return result;
+      } catch (error) {
+          throw error;
+      }
+  },
+
+  deleteInstructeur: async (id) => {
+      try {
+          const deleteQuery = 'DELETE FROM instructeur WHERE id = ?';
+          const result = await query(deleteQuery, [id]);
+          return result;
+      } catch (error) {
+          throw error;
+      }
+  },
+
+  };
+
+  module.exports = Instructeur;

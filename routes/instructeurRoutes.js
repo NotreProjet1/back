@@ -7,7 +7,7 @@ router.post('/ajouter', instructeurController.ajouterInstructeur);
 router.post('/register', instructeurController.register);
 router.post('/login', instructeurController.login);
 
-router.put('/modifier/:id', instructeurController.modifierInstructeur); // Added :id parameter
+router.put('/modifier/:id', instructeurController.modifierInstructeur); 
 router.delete('/supprimer/:id', instructeurController.supprimerInstructeur);
 
 module.exports = router;
