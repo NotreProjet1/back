@@ -1,6 +1,6 @@
 // formationController.js
-const FormationModel = require('./models/formationModel');
-const authenticateToken = require('../middlewares/authMiddleware');
+const FormationModel = require('../models/FormationModel');
+const authenticateToken = require('../middleware/authMiddleware');
 
 const createFormationTable = (callback) => {
     FormationModel.createFormationTable(callback);

@@ -1,91 +1,106 @@
-const db = require('../config/db');
-
-const CoursModel = {
-  createCoursTable: (callback) => {
-    db.query(`
-      CREATE TABLE IF NOT EXISTS coursp (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        titre VARCHAR(255) NOT NULL,
-        description TEXT NOT NULL,
-        contenu TEXT NOT NULL,
-        planning TEXT NOT NULL,
-        prix DECIMAL(10, 2) NOT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-      )
-    `, (error, results) => {
-      if (error) {
-        return callback(error);
-      }
-      return callback(null, results);
-    });
-  },
-
-  createCourse: (titre, contenu, description, planning, prix, callback) => {
-    db.query(
-      'INSERT INTO coursp (titre, contenu, description, planning, prix) VALUES (?, ?, ?, ?, ?)',
-      [titre, contenu, description, planning, prix],
-      (error, results) => {
-        if (error) {
-          console.error('Error in createCourse:', error);
-          return callback(error);
-        }
-        return callback(null, results.insertId);
-      }
-    );
-  },
-
-  getAllCourses: (callback) => {
-    db.query('SELECT * FROM coursp', (error, results) => {
-      if (error) {
+// coursController.js
+const CoursModel = require('../models/CoursModel');
+const authenticateToken = require('../middleware/authMiddleware');
 
 
-        console.error('Error in getAllCourses:', error);
-        return callback(error);
-      }
-      return callback(null, results);
-    });
-  },
+const createCourse = async (req, res) => {
+    try {
+        // Check for the presence of the authorization header
+        authenticateToken(req, res, async () => {
+            const { titre, contenu, description, planning, prix } = req.body;
 
-  updateCourse: (id, titre, contenu, description, planning, prix, callback) => {
-    db.query(
-      'UPDATE coursp SET titre = ?, contenu = ?, description = ?, planning = ?, prix = ? WHERE id = ?',
-      [titre, contenu, description, planning, prix, id],
-      (error, results) => {
-        if (error) {
-          console.error('Error in updateCourse:', error);
-          return callback(error);
-        }
-        return callback(null, results);
-      }
-    );
-  },
-
-  deleteCourse: (id, callback) => {
-    db.query('DELETE FROM coursp WHERE id = ?', [id], (error, results) => {
-      if (error) {
-        console.error('Error in deleteCourse:', error);
-        return callback(error);
-      }
-      return callback(null, results);
-    });
-  },
-  searchCoursesByTitre: (titre, callback) => {
-    const searchTerm = '%' + titre + '%'; // Ajout de % au début et à la fin
-    const query = 'SELECT * FROM coursp WHERE titre LIKE ?';
-
-    db.query(query, [searchTerm], (error, results) => {
-      if (error) {
-        console.error('Error in searchCoursesByTitre:', error);
-        return callback(error);
-      }
-
-      return callback(null, results);
-    });
-  },
-  
-  
-
+            await CoursModel.createCourse(titre, contenu, description, planning, prix, (error, result) => {
+                if (error) {
+                    return res.status(500).json({ success: false, message: 'Erreur interne du serveur.' });
+                }
+                return res.status(201).json({
+                    success: true,
+                    message: 'Cours créé avec succès.',
+                    courseId: result
+                });
+            });
+        });
+    } catch (err) {
+        return res.status(500).json({ success: false, message: 'Erreur interne du serveur.' });
+    }
 };
 
-module.exports = CoursModel;
+const getAllCourses = async (req, res) => {
+    try {
+        // Check for the presence of the authorization header
+        authenticateToken(req, res, async () => {
+            await CoursModel.getAllCourses((error, results) => {
+                if (error) {
+                    return res.status(500).json({ success: false, message: 'Erreur interne du serveur.' });
+                }
+                return res.status(200).json({ success: true, courses: results });
+            });
+        });
+    } catch (err) {
+        return res.status(500).json({ success: false, message: 'Erreur interne du serveur.' });
+    }
+};
+
+const updateCourse = async (req, res) => {
+    try {
+        // Check for the presence of the authorization header
+        authenticateToken(req, res, async () => {
+            const { id } = req.params;
+            const { titre, contenu, description, planning, prix } = req.body;
+
+            await CoursModel.updateCourse(id, titre, contenu, description, planning, prix, (error, result) => {
+                if (error) {
+                    return res.status(500).json({ success: false, message: 'Erreur interne du serveur.' });
+                }
+                return res.status(200).json({ success: true, message: 'Cours modifié avec succès.', result });
+            });
+        });
+    } catch (err) {
+        return res.status(500).json({ success: false, message: 'Erreur interne du serveur.' });
+    }
+};
+
+const deleteCourse = async (req, res) => {
+    try {
+        // Check for the presence of the authorization header
+        authenticateToken(req, res, async () => {
+            const { id } = req.params;
+
+            await CoursModel.deleteCourse(id, (error, result) => {
+                if (error) {
+                    return res.status(500).json({ success: false, message: 'Erreur interne du serveur.' });
+                }
+                return res.status(200).json({ success: true, message: 'Cours supprimé avec succès.', result });
+            });
+        });
+    } catch (err) {
+        return res.status(500).json({ success: false, message: 'Erreur interne du serveur.' });
+    }
+};
+
+const searchCoursesByTitre = async (req, res) => {
+    try {
+        // Check for the presence of the authorization header
+        authenticateToken(req, res, async () => {
+            const { titre } = req.query;
+
+            await CoursModel.searchCoursesByTitre(titre, (error, results) => {
+                if (error) {
+                    return res.status(500).json({ success: false, message: 'Erreur interne du serveur.' });
+                }
+                return res.status(200).json({ success: true, courses: results });
+            });
+        });
+    } catch (err) {
+        return res.status(500).json({ success: false, message: 'Erreur interne du serveur.' });
+    }
+};
+
+module.exports = {
+  
+    createCourse,
+    getAllCourses,
+    updateCourse,
+    deleteCourse,
+    searchCoursesByTitre
+};

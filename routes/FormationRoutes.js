@@ -7,9 +7,9 @@ const formationController = require('../controllers/FormationController');
 
 // Routes CRUD pour les formations
 router.post('/create', formationController.createFormation);
-router.get('/', authMiddleware, formationController.getAllFormations);
-router.put('/:id', authMiddleware, formationController.updateFormation);
-router.delete('/:id', authMiddleware, formationController.deleteFormation);
-router.get('/search', authMiddleware, formationController.searchFormationsByTitre);
+router.get('/', formationController.getAllFormations);
+router.put('/:id', formationController.updateFormation);
+router.delete('/:id', formationController.deleteFormation);
+router.get('/search', formationController.searchFormationsByTitre);
 
 module.exports = router;
